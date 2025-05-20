@@ -1,9 +1,17 @@
 #root {
-  max-width: 1280px;
+  max-width: 1200px; /* Adjusted max-width */
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  padding: 20px; /* Adjusted padding */
+  text-align: center; /* Kept from original */
+  width: 100%; /* Ensure it uses the available width up to max-width */
 }
+
+/* App Title Styling (applied to h1 in App.jsx header) */
+/* No specific .app-title class needed if we style h1 within app's context directly */
+/* If App.jsx uses a specific class for its header title, that class would be styled here. */
+/* For now, assuming the h1 in App.jsx header will pick up global h1 font (Bangers) */
+/* and we can add color here or directly in App.jsx if needed. */
+/* The h1 in App.jsx's header has inline styles for font-size currently. */
 
 .logo {
   height: 6em;
@@ -38,5 +46,158 @@
 }
 
 .read-the-docs {
-  color: #888;
+  color: #888; /* Can be updated with a CSS variable if needed */
 }
+
+/* General Button Styling */
+button, .brand-button {
+  font-family: 'Open Sans', sans-serif;
+  background-color: var(--primary-blue);
+  color: var(--text-on-primary);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px; /* Changed from 5px to 8px */
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s ease, color 0.3s ease; /* Added color transition */
+  margin: 5px;
+}
+
+button:hover, .brand-button:hover {
+  background-color: var(--accent-light-blue);
+  color: var(--text-on-light-accent);
+}
+
+button:disabled, .brand-button:disabled {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+}
+
+button:focus-visible, .brand-button:focus-visible { /* Custom focus style */
+  outline: 3px solid var(--accent-light-blue);
+  outline-offset: 2px;
+}
+
+
+/* Section Styling */
+.app-section {
+  background-color: #fff; 
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  text-align: left; /* Override center alignment from #root for section content */
+  border-top: 3px solid var(--accent-brown); /* Added accent brown border top */
+}
+
+/* Input Fields Styling */
+input[type="file"], input[type="text"] { /* Added input[type="text"] for completeness */
+  font-family: 'Open Sans', sans-serif;
+  padding: 8px 12px; /* Adjusted padding */
+  margin-top: 5px; /* Added margin-top for spacing from labels or other elements */
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  display: block; /* Make them block level for easier spacing */
+  width: calc(100% - 24px); /* Adjust width considering padding, or use box-sizing: border-box */
+  box-sizing: border-box;
+}
+
+/* Styling for lists within sections, e.g., YouTube activity or recommendations */
+/* Styling for lists within sections, e.g., YouTube activity or recommendations */
+/* The .app-section ul and li styles from before are good, let's refine/replace with .video-item */
+
+.video-item, .recommendation-card { /* Using both for clarity, they'll share styles */
+  border: 1px solid #eee; /* Lighter border */
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 6px;
+  background-color: #fff; 
+  display: flex; /* Use flexbox for layout */
+  align-items: flex-start;
+}
+.video-item:last-child, .recommendation-card:last-child {
+  margin-bottom: 0; /* Remove margin for the last item */
+}
+
+.video-item img {
+  max-width: 120px; 
+  height: auto;
+  border-radius: 4px;
+  margin-right: 15px; 
+  flex-shrink: 0; /* Prevent image from shrinking */
+  /* float: left; -- Replaced by flexbox */
+}
+
+.video-item-content { /* Create a container for text content to manage flex growth */
+  flex-grow: 1;
+}
+
+.video-item h4, .recommendation-card h4 { /* Video/Recommendation titles */
+  font-family: 'Open Sans', sans-serif !important; /* Override Bangers for these specific h4s */
+  font-weight: 600; 
+  color: var(--primary-blue);
+  margin-top: 0;
+  margin-bottom: 0.35rem; /* Increased margin slightly */
+}
+            
+.video-item h4 a, .recommendation-card h4 a {
+  color: var(--primary-blue); 
+  text-decoration: none;
+}
+
+.video-item h4 a:hover, .recommendation-card h4 a:hover {
+  color: var(--accent-light-blue);
+  text-decoration: underline;
+}
+
+.video-item p, .recommendation-card p {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin-bottom: 5px;
+  color: var(--neutral-dark-gray); /* Ensure consistent text color */
+}
+            
+.video-item p.reasoning, .recommendation-card p.reasoning { /* For Gemini's reasoning */
+  font-style: italic;
+  color: #555; /* Slightly lighter than neutral-dark-gray for emphasis */
+  margin-top: 10px;
+}
+
+/* Remove generic .app-section ul, li, h4, p if .video-item is used for all list items now */
+/* Or keep them if .app-section is used for other text content that needs those global section styles */
+/* For now, assuming .video-item will be the primary way to style these list items. */
+/* Commenting out the old generic .app-section list styles to avoid conflicts if not needed. */
+
+/*
+.app-section ul {
+  list-style: none;
+  padding: 0;
+}
+
+.app-section li {
+  border-bottom: 1px solid #eee;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  display: flex;
+  align-items: flex-start;
+}
+.app-section li:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.app-section h4 { 
+  margin-top: 0;
+  margin-bottom: 0.25rem;
+  color: var(--primary-blue);
+}
+
+.app-section p {
+  font-size: 0.9rem;
+  margin: 0 0 0.25rem 0;
+  line-height: 1.4;
+}
+*/

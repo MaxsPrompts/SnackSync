@@ -118,14 +118,27 @@ function App() {
   return (
     <>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', borderBottom: '1px solid #ccc' }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <a href="https://vite.dev" target="_blank" rel="noopener noreferrer">
-            <img src={viteLogo} className="logo" alt="Vite logo" />
-          </a>
-          <a href="https://react.dev" target="_blank" rel="noopener noreferrer">
-            <img src={reactLogo} className="logo react" alt="React logo" />
-          </a>
-          <h1 style={{ marginLeft: '1rem', fontSize: '1.5rem' }}>Snacksy (Video Suggester)</h1>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}> {/* Changed to column for logo + title */}
+          <div className="logo-container" style={{ marginBottom: '0px' }}> 
+            {/* Optional: Add a simple CSS-based play button icon here later if desired */}
+            <span className="logo-text" style={{ 
+              fontFamily: '"Open Sans", sans-serif', 
+              fontWeight: 600, /* SemiBold */
+              color: 'var(--neutral-dark-gray)', /* Use CSS variable */
+              fontSize: '1.2rem' /* Adjusted size slightly */
+            }}>
+              SnackSync
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center' }}> {/* Inner div for logos + h1 */}
+            <a href="https://vite.dev" target="_blank" rel="noopener noreferrer">
+              <img src={viteLogo} className="logo" alt="Vite logo" style={{ height: '3em', padding: '0.5em'}} />
+            </a>
+            <a href="https://react.dev" target="_blank" rel="noopener noreferrer">
+              <img src={reactLogo} className="logo react" alt="React logo" style={{ height: '3em', padding: '0.5em'}} />
+            </a>
+            <h1 style={{ marginLeft: '0.5rem', fontSize: '1.5rem', color: 'var(--primary-blue)' }}>Snacksy (Video Suggester)</h1> {/* Added brand color to h1 */}
+          </div>
         </div>
         <div>
           {user ? (
@@ -172,14 +185,19 @@ function App() {
           {youtubeActivity.length > 0 && (
             <div>
               <h3>My Liked Videos:</h3>
-              <ul style={{ listStyle: 'none', padding: 0 }}>
+              {/* Removed inline listStyle and padding from ul, will be handled by .app-section ul or direct li styling */}
+              <ul> 
                 {youtubeActivity.map(video => (
-                  <li key={video.id} style={{ borderBottom: '1px solid #eee', marginBottom: '1rem', paddingBottom: '1rem', display: 'flex', alignItems: 'flex-start' }}>
-                    <img src={video.thumbnail} alt={video.title} width="120" style={{ marginRight: '1rem', flexShrink: 0 }} />
-                    <div style={{ flexGrow: 1 }}>
-                      <h4 style={{ marginTop: 0, marginBottom: '0.25rem' }}>{video.title}</h4>
-                      <p style={{ fontSize: '0.9rem', margin: '0 0 0.25rem 0' }}>Channel: {video.channelTitle}</p>
-                      <p style={{ fontSize: '0.8rem', margin: 0 }}>Duration: {video.duration} | Views: {video.viewCount}</p>
+                  <li key={video.id} className="video-item"> {/* Applied .video-item class */}
+                    {video.thumbnail && <img src={video.thumbnail} alt={video.title} />} {/* Removed inline width, use CSS */}
+                    <div className="video-item-content"> {/* Added content wrapper */}
+                      <h4>
+                        <a href={`https://www.youtube.com/watch?v=${video.id}`} target="_blank" rel="noopener noreferrer">
+                          {video.title}
+                        </a>
+                      </h4>
+                      <p>Channel: {video.channelTitle}</p>
+                      <p>Duration: {video.duration} | Views: {video.viewCount}</p>
                     </div>
                   </li>
                 ))}
@@ -201,7 +219,7 @@ function App() {
           <button
             onClick={handleGetRecommendations}
             disabled={!user || detectedTags.length === 0 || recommendationLoading}
-            style={{ padding: '0.5rem 1rem', marginBottom: '1rem' }}
+            /* style removed, will use global button styles from App.css */
           >
             {recommendationLoading ? 'Getting Recommendations...' : 'Get Video Recommendations'}
           </button>
@@ -359,20 +377,98 @@ async function handleGetRecommendationsLogic(user, detectedTags, setRecommendati
       <main style={{ padding: '1rem' }}>
         {authError && <p style={{ color: 'red' }}>Authentication Error: {authError}</p>}
         
-        <ImageUploader 
-          onTagsDetected={(tags) => {
-            setDetectedTags(tags);
-            setRecommendations([]); 
-            setRecommendationError(null);
-          }} 
-        />
+        <div className="app-section"> {/* ImageUploader Section */}
+          <ImageUploader 
+            onTagsDetected={(tags) => {
+              setDetectedTags(tags);
+              setRecommendations([]); 
+              setRecommendationError(null);
+            }} 
+          />
+        </div>
 
-        <hr style={{ margin: '2rem 0' }} />
+        {/* <hr style={{ margin: '2rem 0' }} />  Optional: hr can be removed if sections provide enough separation */}
 
-        <div>
-          <h2>Your YouTube Activity</h2>
-          <button 
-            onClick={fetchYouTubeActivity} 
+        { user && ( /* Conditionally render YouTube Activity and Recommendations sections only if user is logged in */
+          <>
+            <div className="app-section"> {/* YouTube Activity Section */}
+              <h2>Your YouTube Activity</h2>
+              <button 
+                onClick={fetchYouTubeActivity} 
+            disabled={!user || youtubeLoading}
+            style={{ padding: '0.5rem 1rem', marginBottom: '1rem' }}
+          >
+            {youtubeLoading ? 'Loading Activity...' : 'Fetch My Liked YouTube Videos'}
+          </button>
+
+          {youtubeLoading && <p>Loading YouTube activity...</p>}
+          {youtubeError && <p style={{ color: 'red' }}>Error: {youtubeError}</p>}
+
+          {youtubeActivity.length > 0 && (
+            <div>
+              <h3>My Liked Videos:</h3>
+              <ul style={{ listStyle: 'none', padding: 0 }}>
+                {youtubeActivity.map(video => (
+                  <li key={video.id} style={{ borderBottom: '1px solid #eee', marginBottom: '1rem', paddingBottom: '1rem', display: 'flex', alignItems: 'flex-start' }}>
+                    <img src={video.thumbnail} alt={video.title} width="120" style={{ marginRight: '1rem', flexShrink: 0 }} />
+                    <div style={{ flexGrow: 1 }}>
+                      <h4 style={{ marginTop: 0, marginBottom: '0.25rem' }}>{video.title}</h4>
+                      <p style={{ fontSize: '0.9rem', margin: '0 0 0.25rem 0' }}>Channel: {video.channelTitle}</p>
+                      <p style={{ fontSize: '0.8rem', margin: 0 }}>Duration: {video.duration} | Views: {video.viewCount}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {!youtubeLoading && !youtubeError && youtubeActivity.length === 0 && user && 
+           ( <p>No liked videos found or activity is empty.</p> )
+          }
+        </div>
+
+        {/* <hr style={{ margin: '2rem 0' }} /> Optional: hr can be removed */}
+
+        <div className="app-section"> {/* Recommendations Section */}
+          <h2>Video Recommendations</h2>
+          <button
+            onClick={handleGetRecommendations}
+            disabled={!user || detectedTags.length === 0 || recommendationLoading}
+            style={{ padding: '0.5rem 1rem', marginBottom: '1rem' }}
+          >
+            {recommendationLoading ? 'Getting Recommendations...' : 'Get Video Recommendations'}
+          </button>
+
+          {recommendationLoading && <p>Fetching recommendations...</p>}
+          {recommendationError && <p style={{ color: 'red' }}>Recommendation Error: {recommendationError}</p>}
+
+          {recommendations.length > 0 && (
+            <div>
+              <h3>Recommended Videos:</h3>
+              {/* No outer ul needed if each item is a self-contained card */}
+              {recommendations.map(rec => (
+                <div key={rec.video_id || rec.title} className="recommendation-card"> {/* Applied .recommendation-card */}
+                  {/* No image for recommendations as per current data structure from Gemini */}
+                  <div className="video-item-content"> {/* Re-using for consistent text layout */}
+                    <h4>
+                      <a href={`https://www.youtube.com/watch?v=${rec.video_id}`} target="_blank" rel="noopener noreferrer">
+                        {rec.title || rec.video_id}
+                      </a>
+                    </h4>
+                    <p className="reasoning"><b>Reason:</b> {rec.reason}</p> {/* Applied .reasoning */}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {!recommendationLoading && !recommendationError && recommendations.length === 0 && user && detectedTags.length > 0 &&
+            (<p>No specific recommendations found. Try different food or check your YouTube activity!</p>)
+          }
+        </div>
+          </>
+        )}
+      </main>
+    </>
+  );
             disabled={!user || youtubeLoading}
             style={{ padding: '0.5rem 1rem', marginBottom: '1rem' }}
           >

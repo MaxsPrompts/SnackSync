@@ -1,11 +1,20 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  /* Define brand colors */
+  --primary-blue: #3A8BCD;
+  --accent-light-blue: #80C3F3;
+  --accent-brown: #A0522D;
+  --neutral-off-white: #F8F8F8;
+  --neutral-dark-gray: #333333;
+  --text-on-primary: #FFFFFF; 
+  --text-on-light-accent: #333333;
+
+  /* Existing global settings */
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  /* color-scheme: light dark; */ /* Removing this as we are defining our own light theme now */
+  /* color: rgba(255, 255, 255, 0.87); */ /* Will be set by body or specific components */
+  /* background-color: #242424; */ /* Will be set by body */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -14,26 +23,37 @@
 }
 
 a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+  font-weight: 500; /* Keep or adjust as needed, Open Sans has weights */
+  color: var(--primary-blue);
+  text-decoration: none; /* Or customize as per brand feel */
 }
 a:hover {
-  color: #535bf2;
+  color: var(--accent-light-blue);
+  text-decoration: underline; /* Or customize */
 }
 
 body {
+  font-family: 'Open Sans', sans-serif; /* From previous step */
+  background-color: var(--neutral-off-white);
+  color: var(--neutral-dark-gray);
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
+  display: flex; /* From previous step */
+  flex-direction: column; /* From previous step */
+  align-items: center; /* From previous step */
   min-height: 100vh;
+  min-width: 320px; /* Kept from previous state */
 }
 
-h1 {
-  font-size: 3.2em;
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Bangers', cursive; /* Heading font */
+  /* Keep existing h1 styles, and allow others to inherit or be overridden by App.css */
+}
+
+h1 { /* Specific h1 styles from before, now with Bangers font automatically */
+  font-size: 3.2em; /* Example, might be overridden by App.jsx inline style for header */
   line-height: 1.1;
 }
+
 
 button {
   border-radius: 8px;
@@ -47,13 +67,18 @@ button {
   transition: border-color 0.25s;
 }
 button:hover {
-  border-color: #646cff;
+  /* border-color: #646cff; */ /* Replaced by App.css button hover styles */
 }
+/* 
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 4px auto -webkit-focus-ring-color; /* Replaced by App.css button focus styles */
 }
+*/
 
+/* Remove the @media (prefers-color-scheme: light) block as we are now defining the light theme directly */
+/* If a dark theme is needed later, it can be added back with dark mode variables */
+/* 
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
@@ -66,3 +91,4 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+*/
