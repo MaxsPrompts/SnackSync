@@ -1,4 +1,13 @@
 SnackSync 🍕📺
+
+To test locally, you'll need to:
+
+Set up prerequisites: Node.js, Python, PostgreSQL, and Google Cloud credentials (OAuth Client ID with correct localhost URIs, Gemini API key).
+Configure .env files in both frontend (with VITE_GOOGLE_CLIENT_ID, VITE_API_BASE_URL) and backend (with DATABASE_URL, GEMINI_API_KEY, ENCRYPTION_KEY, Google OAuth details if not using client_secret.json directly for all parts).
+Run the backend: cd backend && pip install -r requirements.txt && uvicorn main:app --reload --port 8000.
+Run the frontend: cd frontend && npm install && npm run dev.
+Then, test each feature: Sign-In, Image Upload & Tagging, YouTube Activity Fetching, and Recommendations. Check browser console and backend terminal for errors.
+
 Tired of your food getting cold while you search for the perfect YouTube video? SnackSync instantly pairs your meal with the ideal vibe.
 
 Snap a photo of your food, and SnackSync analyzes it—what you’re eating, where, and when. Then, it taps into your YouTube account to recommend or auto-play the best-matching video: a calming vlog for your morning coffee, a fast-paced mukbang for your takeout, or something educational for your study snack.
