@@ -5,7 +5,7 @@ This document outlines the API endpoints for the Snacksy Video Suggester applica
 ## Endpoint: `/api/suggest_video`
 
 *   **Method:** `POST`
-*   **Description:** Accepts a food image, analyzes it using Google Gemini, and returns detected food-related tags.
+*   **Description:** Accepts a food image, analyzes it using Google Gemini, and returns detected food-related tags. This endpoint is currently unprotected and does not require authentication.
 *   **Request:**
     *   `Content-Type: multipart/form-data`
     *   Body should contain a single field:
@@ -49,7 +49,7 @@ This document outlines the API endpoints for the Snacksy Video Suggester applica
 ## Endpoint: `/auth/google/login`
 
 *   **Method:** `POST`
-*   **Description:** Handles the Google OAuth 2.0 authorization code received from the frontend. It exchanges this code for access and refresh tokens, verifies the user's identity, creates or updates the user in the database (storing encrypted tokens), and returns basic user information.
+*   **Description:** Handles the Google OAuth 2.0 authorization code received from the frontend. It exchanges this code for access and refresh tokens, verifies the user's identity, creates or updates the user in the database (storing encrypted tokens), and returns basic user information. Upon successful authentication, it also sets an HTTP-only session cookie.
 *   **Request Body:**
     *   `Content-Type: application/json`
     *   Body:
@@ -69,6 +69,7 @@ This document outlines the API endpoints for the Snacksy Video Suggester applica
           "email": "user_email@example.com"
         }
         ```
+    *   **Cookie Note**: Sets an HTTP-only cookie named `session_token` containing a JWT for session management. The cookie is configured with `HttpOnly`, `SameSite=Lax`, and `Secure` (in production environments).
 *   **Error Responses:**
     *   **400 Bad Request:**
         *   If the authorization code is invalid or expired.
@@ -88,6 +89,10 @@ This document outlines the API endpoints for the Snacksy Video Suggester applica
             ```json
             { "detail": "GOOGLE_REDIRECT_URI is not configured on the server." }
             ```
+        *   If JWT configuration is missing on the server.
+            ```json
+            { "detail": "JWT_SECRET_KEY is not configured on the server." }
+            ```
         *   For other server-side issues (e.g., database errors, encryption errors, problems initializing Google Auth flow).
             ```json
             { "detail": "Database or encryption error: <error reason>" } 
@@ -97,13 +102,32 @@ This document outlines the API endpoints for the Snacksy Video Suggester applica
             ```
 ---
 
+## Endpoint: `/auth/logout`
+
+*   **Method:** `POST`
+*   **Description:** Logs the user out by clearing their session cookie.
+*   **Authentication**: Requires a valid `session_token` cookie to be sent, though the endpoint's primary function is to clear this token regardless of its prior validity if present.
+*   **Request Body:** None.
+*   **Success Response (200 OK):**
+    *   `Content-Type: application/json`
+    *   Body:
+        ```json
+        {
+          "message": "Successfully logged out"
+        }
+        ```
+    *   **Cookie Note**: Clears the `session_token` HTTP-only cookie.
+*   **Error Responses:**
+    *   Generally, this endpoint aims for a successful response even if the cookie was already absent. No specific error responses are typically defined beyond standard server errors (e.g., 500 if the server has an internal issue processing the request).
+
+---
+
 ## Endpoint: `/api/youtube_activity`
 
 *   **Method:** `GET`
-*   **Description:** Fetches a list of the authenticated user's liked YouTube videos. User identification is currently handled via a query parameter.
-*   **Query Parameters:**
-    *   `google_id` (string, required): The Google ID of the user. 
-        *   *Note: This is a temporary solution for user identification and will be replaced by session/JWT-based authentication in future iterations.*
+*   **Description:** Fetches a list of the authenticated user's liked YouTube videos.
+*   **Authentication:** Requires authentication via an HTTP-only `session_token` cookie containing a valid JWT.
+*   **Query Parameters:** None. (User is identified from the session token).
 *   **Success Response (200 OK):**
     *   `Content-Type: application/json`
     *   Body: A JSON array of video objects.
@@ -131,52 +155,32 @@ This document outlines the API endpoints for the Snacksy Video Suggester applica
                 "viewCount": "12345",
                 "likeCount": "678",
                 "channelTitle": "Channel A"
-            },
-            {
-                "id": "VIDEO_ID_HERE_2",
-                "title": "Another Great Video",
-                "thumbnail": "http://example.com/thumb2.jpg",
-                "duration": "PT23M12S",
-                "viewCount": "98765",
-                "likeCount": "1234",
-                "channelTitle": "Channel B"
             }
+            // ... more videos
         ]
         ```
 *   **Error Responses:**
-    *   **401 Unauthorized**: If the authentication token is invalid, expired, and refresh failed.
+    *   **401 Unauthorized**: If the `session_token` cookie is missing, invalid, or expired.
         ```json
-        {
-            "detail": "Authentication token expired or invalid, and refresh failed: [Error details from Google]. Please re-authenticate."
-        }
+        { "detail": "Not authenticated (no session token)" }
         ```
         ```json
-        { 
-            "detail": "Failed to refresh token: [Error details from Google]. Please re-authenticate." 
-        }
-        ```
-    *   **403 Forbidden**: If the YouTube API access is denied (e.g., YouTube Data API not enabled, user revoked permission, or quota issues).
-        ```json
-        {
-            "detail": "Access to YouTube API forbidden. Check API permissions or scopes: [Specific error details]"
-        }
+        { "detail": "Invalid or expired token" }
         ```
         ```json
-        {
-            "detail": "YouTube API quota exceeded. Please try again later."
-        }
+        { "detail": "Authentication token expired or invalid, and refresh failed: [Error details from Google]. Please re-authenticate." }
         ```
-    *   **404 Not Found**: If the user or their credentials are not found in the database.
+    *   **403 Forbidden**: If the YouTube API access is denied.
         ```json
-        {
-            "detail": "User or credentials not found. Please authenticate."
-        }
+        { "detail": "Access to YouTube API forbidden. Check API permissions or scopes: [Specific error details]" }
         ```
-    *   **500 Internal Server Error**: For other server-side issues during the process.
+    *   **404 Not Found**: If the user's credentials (needed for YouTube API) are not found in the database.
         ```json
-        {
-            "detail": "Error fetching YouTube activity: [Specific error message]"
-        }
+        { "detail": "User or credentials not found. Please authenticate." } 
+        ```
+    *   **500 Internal Server Error**: For other server-side issues.
+        ```json
+        { "detail": "Error fetching YouTube activity: [Specific error message]" }
         ```
 ---
 
@@ -184,22 +188,20 @@ This document outlines the API endpoints for the Snacksy Video Suggester applica
 
 *   **Method:** `POST`
 *   **Description:** Fetches personalized YouTube video recommendations based on food tags and the user's YouTube activity. Uses Gemini AI for the recommendation logic.
+*   **Authentication:** Requires authentication via an HTTP-only `session_token` cookie containing a valid JWT.
 *   **Request Body:**
     *   `Content-Type: application/json`
     *   **Schema**:
         ```json
         {
-          "food_tags": ["string"],
-          "google_id": "string"
+          "food_tags": ["string"]
         }
         ```
         *   `food_tags`: List of food tags from image analysis.
-        *   `google_id`: Google ID of the authenticated user (temporary, will be replaced by session/JWT).
     *   **Example**:
         ```json
         {
-          "food_tags": ["pizza", "cheese", "pepperoni"],
-          "google_id": "USER_GOOGLE_ID_123"
+          "food_tags": ["pizza", "cheese", "pepperoni"]
         }
         ```
 *   **Success Response (200 OK):**
@@ -221,43 +223,24 @@ This document outlines the API endpoints for the Snacksy Video Suggester applica
                 "video_id": "dQw4w9WgXcQ",
                 "title": "Funny Cat Video",
                 "reason": "A lighthearted video that pairs well with casual snacking, similar to other funny content you've enjoyed."
-            },
-            {
-                "video_id": "L_LUpnjgPso",
-                "title": "ASMR Cooking: Perfect Pasta",
-                "reason": "The relaxing vibe of ASMR cooking could be a great match for your meal, and you've liked cooking videos before."
             }
+            // ... more recommendations
         ]
         ```
 *   **Error Responses:**
-    *   **400 Bad Request**: If `food_tags` is missing and YouTube activity fetching also fails (or no activity found).
+    *   **400 Bad Request**: If `food_tags` is empty or missing.
         ```json
-        {
-            "detail": "Cannot generate recommendations without food tags if YouTube activity is also unavailable."
-        }
+        { "detail": "Cannot generate recommendations without food tags if YouTube activity is also unavailable." }
         ```
-    *   **401 Unauthorized**: If issues with user's Google authentication or token refresh during YouTube activity fetching (if `fetch_user_youtube_activity` itself raises this, though it's currently a soft failure in `recommend_video`).
+    *   **401 Unauthorized**: If the `session_token` cookie is missing, invalid, or expired.
         ```json
-        {
-            "detail": "Failed to refresh token: [Error details]. Please re-authenticate."
-        }
+        { "detail": "Not authenticated (no session token)" }
         ```
-    *   **404 Not Found**: If the user specified by `google_id` is not found *and* this leads to an inability to fetch YouTube activity (though this is a soft failure in the current implementation).
         ```json
-        {
-            "detail": "User or credentials not found. Please authenticate."
-        }
+        { "detail": "Invalid or expired token" }
         ```
     *   **500 Internal Server Error**: For issues with the Gemini API call or other unexpected server errors.
         ```json
-        {
-            "detail": "Failed to get recommendations from Gemini: [Specific error message]"
-        }
-        ```
-        ```json
-        {
-            "detail": "An unexpected error occurred while fetching YouTube activity." 
-            // If the soft failure in activity fetching encounters an unexpected error.
-        }
+        { "detail": "Failed to get recommendations from Gemini: [Specific error message]" }
         ```
 ---

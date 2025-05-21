@@ -33,7 +33,8 @@ function App() {
     onSuccess: async (codeResponse) => {
       setAuthError(null);
       try {
-        const backendResponse = await fetch('http://localhost:8000/auth/google/login', {
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+        const backendResponse = await fetch(`${apiBaseUrl}/auth/google/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -80,21 +81,59 @@ function App() {
     setRecommendations([]); // Clear recommendations on sign out
     setRecommendationError(null); // Clear recommendation errors
     setRecommendationLoading(false); // Reset recommendation loading state
+    setRecommendations([]); // Clear recommendations on sign out
+    setRecommendationError(null); // Clear recommendation errors
+    setRecommendationLoading(false); // Reset recommendation loading state
     console.log('User signed out.');
   };
 
+  const handleSignOut = async () => {
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+    try {
+      const response = await fetch(`${apiBaseUrl}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Backend logout failed:', errorData.detail || 'Unknown error');
+        setAuthError(errorData.detail || 'Logout failed on server.'); 
+      }
+    } catch (error) {
+      console.error('Error during backend logout:', error);
+      setAuthError(error.message || 'Network error during logout.');
+    } finally {
+      googleLogout();
+      localStorage.removeItem('user');
+      setUser(null);
+      setAuthError(null); 
+      setDetectedTags([]); 
+      setRecommendations([]); 
+      setYoutubeActivity([]); 
+      setYoutubeError(null);
+      setYoutubeLoading(false);
+      setRecommendationError(null);
+      setRecommendationLoading(false);
+      console.log('User signed out from frontend.');
+    }
+  };
+
   const fetchYouTubeActivity = async () => {
-    if (!user || !user.google_id) {
+    if (!user) { // No need to check user.google_id as user object itself implies login
       setYoutubeError("Please sign in first to fetch YouTube activity.");
       return;
     }
 
     setYoutubeLoading(true);
     setYoutubeError(null);
-    setYoutubeActivity([]); // Clear previous activity
+    setYoutubeActivity([]);
 
     try {
-      const response = await fetch(`http://localhost:8000/api/youtube_activity?google_id=${user.google_id}`);
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiBaseUrl}/api/youtube_activity`, {
+        method: 'GET',
+        credentials: 'include',
+      });
       
       if (response.ok) {
         const data = await response.json();
@@ -303,7 +342,7 @@ async function handleGetRecommendationsLogic(user, detectedTags, setRecommendati
 
 
   const handleGetRecommendations = async () => {
-    if (!user || !user.google_id) {
+    if (!user) { // User object implies login, google_id is not directly needed for this check
       setRecommendationError("Please sign in to get recommendations.");
       return;
     }
@@ -317,15 +356,16 @@ async function handleGetRecommendationsLogic(user, detectedTags, setRecommendati
     setRecommendations([]);
 
     try {
-      const response = await fetch('http://localhost:8000/api/recommend_video', {
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiBaseUrl}/api/recommend_video`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          food_tags: detectedTags,
-          google_id: user.google_id,
+          food_tags: detectedTags, // google_id removed from body
         }),
+        credentials: 'include',
       });
 
       if (response.ok) {
