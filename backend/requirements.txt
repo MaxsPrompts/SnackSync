@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+python-multipart
+google-generativeai
+python-dotenv
+Pillow
+SQLAlchemy
+psycopg2-binary
+cryptography
+google-auth
+google-auth-oauthlib
+google-api-python-client
+requests
